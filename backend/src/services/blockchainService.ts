@@ -37,7 +37,11 @@ const contractABI = [
   "function acceptNomination(uint256) external",
   "function submitClaim(uint256) external",
   "function unlockAsset(uint256) external",
-  "function getAsset(uint256) external view returns (uint256,address,address,string,string,uint8,bool)"
+  "function getAsset(uint256) external view returns (tuple(uint256 id, address owner, address nominee, string name, string ipfsCid, uint8 status, bool nomineeAccepted))",
+  "function verifier() view returns (address)",
+  "function deployer() view returns (address)",
+  "function getOwnerAssets(address) view returns (uint256[])",
+  "function getNomineeAssets(address) view returns (uint256[])"
 ];
 
 export const vaultContract = new ethers.Contract(
