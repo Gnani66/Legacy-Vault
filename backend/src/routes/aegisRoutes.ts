@@ -22,6 +22,14 @@ const otps = new Map<string, { otp: string; expires: number }>();
 const documents = new Map<string, Doc>();
 const audits: Audit[] = [];
 
+// Owner-scoped assets (category/details/nominee/access condition)
+type Asset = { id: string; ownerId: string; category: string; details: Record<string, string>; nomineeId?: string; accessCondition: string; createdAt: string };
+const assets = new Map<string, Asset>();
+
+// Owner emergency / continuity configuration (single record per owner)
+type EmergencyConfig = { inactivityThreshold: number; emergencyNomineeId?: string; releaseConditions?: string };
+const emergencyConfigs = new Map<string, EmergencyConfig>();
+
 function uid() { return Math.random().toString(36).slice(2, 10) + Date.now().toString(36); }
 function now() { return new Date().toISOString(); }
 function addAudit(ownerId: string, action: string, metadata: any = {}) {
@@ -263,7 +271,61 @@ router.get("/security-posture", authMiddleware, (req: AuthRequest, res) => {
     { label: "Magic link authentication", status: "Enabled", detail: "Passwordless nominee access via secure email links." },
     { label: "Phone OTP verification", status: "Enabled", detail: "Possession-based identity verification for nominees." },
   ];
-  return res.json({ controls });
+return res.json({ controls });
+});
+
+// Owner assets (bare-path equivalents of /api/assets for the dashboard modal)
+router.get("/assets", authMiddleware, (req: AuthRequest, res) => {
+  const ownerId = req.user!.userId;
+  const list = Array.from(assets.values()).filter((a) => a.ownerId === ownerId).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  return res.json(list);
+});
+
+router.post("/assets", authMiddleware, (req: AuthRequest, res) => {
+  const ownerId = req.user!.userId;
+  const { category, details, nomineeId, accessCondition } = req.body;
+  if (!category) return res.status(400).json({ message: "Category required" });
+  const asset: Asset = {
+    id: uid(),
+    ownerId,
+    category,
+    details: details || {},
+    nomineeId,
+    accessCondition: accessCondition || "death_certificate",
+    createdAt: now(),
+  };
+  assets.set(asset.id, asset);
+  addAudit(ownerId, "Asset secured", { id: asset.id, category, nomineeId: nomineeId || null });
+  return res.json(asset);
+});
+
+// Owner emergency / continuity configuration
+function defaultEmergencyConfig(): EmergencyConfig {
+  return { inactivityThreshold: 90, emergencyNomineeId: "", releaseConditions: "" };
+}
+
+router.get("/emergency-config", authMiddleware, (req: AuthRequest, res) => {
+  const ownerId = req.user!.userId;
+  return res.json(emergencyConfigs.get(ownerId) || defaultEmergencyConfig());
+});
+
+router.put("/emergency-config", authMiddleware, (req: AuthRequest, res) => {
+  const ownerId = req.user!.userId;
+  const { inactivityThreshold, emergencyNomineeId, releaseConditions } = req.body;
+  const config: EmergencyConfig = {
+    inactivityThreshold: Number(inactivityThreshold) || 90,
+    emergencyNomineeId,
+    releaseConditions,
+  };
+  emergencyConfigs.set(ownerId, config);
+  addAudit(ownerId, "Emergency configuration updated", { inactivityThreshold: config.inactivityThreshold });
+  return res.json(config);
+});
+
+// Owner AI assistant (mirrors /nominee-ask-ai response shape)
+router.post("/ask-ai", authMiddleware, (req: AuthRequest, res) => {
+  const { question } = req.body;
+  return res.json({ answer: `AI assistant: For "${question || "your vault"}", consult the owner for full emergency contacts. This is a mock response ? connect to OpenRouter for real inference.` });
 });
 
 // NOMINEE VAULT (nominee token)
