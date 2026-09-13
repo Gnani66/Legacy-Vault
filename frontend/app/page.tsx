@@ -90,8 +90,11 @@ export default function Home() {
             </div>
           </div>
           <div className="av-nav-right">
-            <Link href="/signin" className="av-nav-link">Sign in</Link>
-            <Link href="/signup" className="av-nav-btn-primary">Get started</Link>
+            <Link href="/nominee-login" className="av-nav-link" style={{ border: "1px solid #c4b5fd", background: "rgba(124, 58, 237, 0.08)", color: "#6d28d9" }}>
+              Nominee Portal
+            </Link>
+            <Link href="/signin" className="av-nav-link">Owner Sign in</Link>
+            <Link href="/dashboard" className="av-nav-btn-primary">Owner Dashboard</Link>
           </div>
         </div>
       </nav>
@@ -151,29 +154,63 @@ export default function Home() {
 
         <div className="av-hero-content">
           <div className="av-hero-badge">
-            <span>Announcing our seed extension</span>
+            <span>Dual-Dashboard Architecture: Owner & Nominee</span>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
           </div>
           <h1 className="av-hero-title">
-            Enterprise-Grade Digital
+            Enterprise Digital Asset &
             <br />
-            Asset Infrastructure
+            Inheritance Continuity
           </h1>
           <p className="av-hero-sub">
-            Aegis Vault powers secure, scalable blockchain infrastructure for businesses and developers — making digital asset management simple, compliant, and seamless.
+            Aegis Vault powers two synchronized dashboards: An operating vault for <b>Asset Owners</b> to assign trusted nominees and secure assets, and a passwordless <b>Nominee Portal</b> for heirs to verify claims with death certificates and inherit assets smoothly.
           </p>
-          <div className="av-hero-actions">
-            <Link href="/signup" className="av-btn-primary">
-              Get started
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-            </Link>
-            <Link href="#contact" className="av-btn-text">
-              Talk to us
-            </Link>
+
+          {/* Dual Dashboard Entry Cards in Hero */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "16px", marginTop: "24px", marginBottom: "28px" }}>
+            <div style={{ background: "rgba(255, 255, 255, 0.95)", padding: "20px", borderRadius: "16px", border: "1px solid rgba(24, 14, 38, 0.12)", boxShadow: "0 10px 25px -5px rgba(24, 14, 38, 0.08)", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+              <div>
+                <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "11px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.06em", color: "#4338ca", background: "#eef2ff", padding: "4px 10px", borderRadius: "999px", marginBottom: "10px" }}>
+                  <span>●</span> Portal 1
+                </div>
+                <h3 style={{ fontSize: "18px", fontWeight: "700", color: "#180E26", marginBottom: "6px" }}>Asset Owner Dashboard</h3>
+                <p style={{ fontSize: "13px", color: "#64748b", lineHeight: "1.5", marginBottom: "16px" }}>
+                  Store bank, property, and crypto records. Assign trusted nominees, trigger instant email notifications, and set contingency release rules.
+                </p>
+              </div>
+              <div style={{ display: "flex", gap: "10px" }}>
+                <Link href="/dashboard" className="av-btn-primary" style={{ flex: 1, justifyContent: "center", fontSize: "14px", height: "42px", padding: "0 14px" }}>
+                  Launch Owner Vault
+                </Link>
+                <Link href="/signin" className="av-btn-text" style={{ fontSize: "13px", padding: "0 10px" }}>
+                  Sign in
+                </Link>
+              </div>
+            </div>
+
+            <div style={{ background: "linear-gradient(135deg, rgba(124, 58, 237, 0.06) 0%, rgba(255, 255, 255, 0.98) 100%)", padding: "20px", borderRadius: "16px", border: "1.5px solid #a78bfa", boxShadow: "0 10px 25px -5px rgba(124, 58, 237, 0.12)", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+              <div>
+                <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "11px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.06em", color: "#6d28d9", background: "#f3e8ff", padding: "4px 10px", borderRadius: "999px", marginBottom: "10px" }}>
+                  <span style={{ color: "#7c3aed" }}>●</span> Portal 2
+                </div>
+                <h3 style={{ fontSize: "18px", fontWeight: "700", color: "#180E26", marginBottom: "6px" }}>Nominee Continuity Portal</h3>
+                <p style={{ fontSize: "13px", color: "#64748b", lineHeight: "1.5", marginBottom: "16px" }}>
+                  Passwordless OTP login for assigned nominees. View allocated assets, upload & verify death certificate via AI, and unlock confidential inheritance credentials.
+                </p>
+              </div>
+              <div style={{ display: "flex", gap: "10px" }}>
+                <Link href="/nominee-login" className="av-btn-primary" style={{ flex: 1, justifyContent: "center", background: "#7c3aed", fontSize: "14px", height: "42px", padding: "0 14px" }}>
+                  Open Nominee Portal
+                </Link>
+                <Link href="/nominee-dashboard" className="av-btn-text" style={{ fontSize: "13px", color: "#7c3aed", padding: "0 10px" }}>
+                  View Demo
+                </Link>
+              </div>
+            </div>
           </div>
 
           <div className="av-hero-trusted">
-            <p>Trusted by leading companies worldwide</p>
+            <p>Trusted by leading companies and estate managers worldwide</p>
             <div className="av-hero-logos">
               {partners.map((p) => (
                 <div key={p} className="av-hero-logo-item">{p}</div>
@@ -195,6 +232,103 @@ export default function Home() {
             {[...partners, ...partners, ...partners].map((p, i) => (
               <div key={i} className="av-marquee-item">{p}</div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══ DUAL DASHBOARD ARCHITECTURE ═══ */}
+      <section id="dashboards" className="av-section" style={{ background: "#fcfbfe", borderTop: "1px solid #f0eaf8", borderBottom: "1px solid #f0eaf8" }}>
+        <div className="av-section-inner">
+          <div className="av-section-header" style={{ textAlign: "center", maxWidth: "800px", margin: "0 auto 48px auto" }}>
+            <span className="av-section-label" style={{ color: "#7c3aed" }}>Ecosystem Architecture</span>
+            <h2>Two Dedicated Dashboards for Complete Continuity</h2>
+            <p>From wealth organization to frictionless claim settlement — Aegis Vault provides segregated, military-grade interfaces for both the Asset Owner and the Nominee.</p>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: "28px" }}>
+            {/* Dashboard 1: Asset Owner */}
+            <div style={{ background: "#ffffff", borderRadius: "20px", border: "1.5px solid #e2e8f0", padding: "32px", display: "flex", flexDirection: "column", justifyContent: "space-between", boxShadow: "0 10px 30px -10px rgba(0,0,0,0.05)" }}>
+              <div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "#180E26", color: "#fff", display: "grid", placeItems: "center", fontWeight: "700", fontSize: "13px" }}>AO</div>
+                    <div>
+                      <h3 style={{ fontSize: "20px", fontWeight: "700", color: "#180E26", margin: 0 }}>Asset Owner Dashboard</h3>
+                      <span style={{ fontSize: "12px", color: "#64748b" }}>For Wealth Ingestion & Governance</span>
+                    </div>
+                  </div>
+                  <span style={{ fontSize: "11px", fontWeight: "700", background: "#eef2ff", color: "#4338ca", padding: "4px 10px", borderRadius: "999px" }}>OWNER ROLE</span>
+                </div>
+                <ul style={{ listStyle: "none", padding: 0, margin: "0 0 28px 0", display: "flex", flexDirection: "column", gap: "14px", fontSize: "14px", color: "#334155" }}>
+                  <li style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
+                    <span style={{ color: "#10b981", fontWeight: "bold" }}>✓</span>
+                    <span><b>Estate Health Metric (0–100)</b>: Real-time scoring of your vault's continuity readiness.</span>
+                  </li>
+                  <li style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
+                    <span style={{ color: "#10b981", fontWeight: "bold" }}>✓</span>
+                    <span><b>Multi-Asset Protection</b>: Secure bank accounts, real estate deeds, crypto keys, and life insurance.</span>
+                  </li>
+                  <li style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
+                    <span style={{ color: "#10b981", fontWeight: "bold" }}>✓</span>
+                    <span><b>Nominee Assignment & Email Alerts</b>: Designate primary/legal nominees; instant invitation links dispatched.</span>
+                  </li>
+                  <li style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
+                    <span style={{ color: "#10b981", fontWeight: "bold" }}>✓</span>
+                    <span><b>Smart Contingency Rules</b>: Enforce death certificate verification or inactivity trigger thresholds.</span>
+                  </li>
+                </ul>
+              </div>
+              <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: "20px", display: "flex", gap: "12px" }}>
+                <Link href="/dashboard" className="av-btn-primary" style={{ flex: 1, justifyContent: "center" }}>
+                  Open Owner Dashboard
+                </Link>
+                <Link href="/signin" className="av-btn-text" style={{ padding: "0 14px" }}>
+                  Sign in
+                </Link>
+              </div>
+            </div>
+
+            {/* Dashboard 2: Nominee */}
+            <div style={{ background: "linear-gradient(180deg, #ffffff 0%, #faf5ff 100%)", borderRadius: "20px", border: "2px solid #c4b5fd", padding: "32px", display: "flex", flexDirection: "column", justifyContent: "space-between", boxShadow: "0 15px 35px -10px rgba(124, 58, 237, 0.12)" }}>
+              <div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "#7c3aed", color: "#fff", display: "grid", placeItems: "center", fontWeight: "700", fontSize: "13px" }}>NP</div>
+                    <div>
+                      <h3 style={{ fontSize: "20px", fontWeight: "700", color: "#180E26", margin: 0 }}>Nominee Continuity Portal</h3>
+                      <span style={{ fontSize: "12px", color: "#7c3aed" }}>For Asset Claims & Legal Inheritance</span>
+                    </div>
+                  </div>
+                  <span style={{ fontSize: "11px", fontWeight: "700", background: "#ede9fe", color: "#6d28d9", padding: "4px 10px", borderRadius: "999px" }}>NOMINEE ROLE</span>
+                </div>
+                <ul style={{ listStyle: "none", padding: 0, margin: "0 0 28px 0", display: "flex", flexDirection: "column", gap: "14px", fontSize: "14px", color: "#334155" }}>
+                  <li style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
+                    <span style={{ color: "#7c3aed", fontWeight: "bold" }}>✓</span>
+                    <span><b>Passwordless OTP Login</b>: Secure access via verified email link and one-time numeric passcode.</span>
+                  </li>
+                  <li style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
+                    <span style={{ color: "#7c3aed", fontWeight: "bold" }}>✓</span>
+                    <span><b>Allocated Assets Visibility</b>: Clear display of assigned properties, bank accounts, and policies.</span>
+                  </li>
+                  <li style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
+                    <span style={{ color: "#7c3aed", fontWeight: "bold" }}>✓</span>
+                    <span><b>Death Certificate Upload & AI Check</b>: Instant OCR stamp analysis + official Government Registry cross-check.</span>
+                  </li>
+                  <li style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
+                    <span style={{ color: "#7c3aed", fontWeight: "bold" }}>✓</span>
+                    <span><b>Instant Asset Unlock</b>: Unlocks confidential routing, deed registrations, and recovery keys upon verification.</span>
+                  </li>
+                </ul>
+              </div>
+              <div style={{ borderTop: "1px solid #e9d5ff", paddingTop: "20px", display: "flex", gap: "12px" }}>
+                <Link href="/nominee-login" className="av-btn-primary" style={{ flex: 1, justifyContent: "center", background: "#7c3aed" }}>
+                  Launch Nominee Portal
+                </Link>
+                <Link href="/nominee-dashboard" className="av-btn-text" style={{ padding: "0 14px", color: "#7c3aed" }}>
+                  Explore View
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -367,10 +501,11 @@ export default function Home() {
                 <a href="#contact">Contact</a>
               </div>
               <div>
-                <h4>Resources</h4>
-                <a href="/demo">Demo</a>
-                <a href="/integration">Integration</a>
-                <a href="/signup">Sign up</a>
+                <h4>Resources & Dashboards</h4>
+                <a href="/dashboard" style={{ fontWeight: 600, color: "#a78bfa" }}>Owner Dashboard</a>
+                <a href="/nominee-login" style={{ fontWeight: 600, color: "#a78bfa" }}>Nominee Portal (OTP)</a>
+                <a href="/demo">Interactive Demo</a>
+                <a href="/integration">System Verification</a>
                 <a href="/signin">Sign in</a>
               </div>
             </div>

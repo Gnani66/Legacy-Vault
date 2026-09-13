@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState, useDeferredValue } from "react";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import AddAssetModal, { AssetRecord } from "@/components/AddAssetModal";
 import { cachedFetch, clearApiCache, getApiUrl } from "@/lib/api";
+import styles from "./vault.module.css";
 
 type AiAnalysis = {
   documentType?: string;
@@ -9,9 +11,8 @@ type AiAnalysis = {
   nominee?: string;
   riskLevel?: "Low" | "Medium" | "High";
   summary?: string;
-  importantPoints?: string[];
-  risks?: string[];
 };
+
 type VaultDocument = {
   id: string;
   title?: string;
@@ -21,16 +22,94 @@ type VaultDocument = {
   createdAt: string;
 };
 
+type Asset = {
+  id: string;
+  category: string;
+  title?: string;
+  nomineeId?: string;
+  accessCondition?: string;
+  createdAt: string;
+  details?: Record<string, string>;
+};
+
 const documentTypes = ["All", "Insurance", "Will", "Property Paper", "Property", "Bank Statement", "Investment", "Legal", "Tax", "Other"];
 const riskFilters = ["All", "High", "Medium", "Low"];
+
+const CATEGORY_LABELS: Record<string, string> = {
+  bank: "Bank",
+  property: "Property",
+  legal: "Legal",
+  crypto: "Digital",
+  insurance: "Insurance",
+};
+
+const ICONS = {
+  plus: "M12 5v14M5 12h14",
+  upload: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12",
+  document: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M8 13h8M8 17h5",
+  bank: "M3 21h18M4 18h16M6 18v-7M10 18v-7M14 18v-7M18 18v-7M2 10l10-7 10 7z",
+  property: "M3 10.5 12 3l9 7.5M5 9.5V21h14V9.5M9 21v-6h6v6",
+  legal: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6",
+  crypto: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",
+  insurance: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",
+};
+
+function Icon({ d, size = 16 }: { d: string; size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d={d} />
+    </svg>
+  );
+}
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("en-IN", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(value));
 }
 
+function assetTitle(asset: Asset) {
+  const details = asset.details || {};
+  return (
+    asset.title ||
+    details.documentTitle ||
+    details.bankName ||
+    details.walletName ||
+    details.provider ||
+    details.propertyAddress ||
+    details.title ||
+    CATEGORY_LABELS[asset.category] ||
+    "Asset"
+  );
+}
+
+function assetSubtitle(asset: Asset) {
+  const details = asset.details || {};
+  return details.supportingDocument || details.accountType || details.propertyType || details.assetType || "Manual record";
+}
+
+function categoryLabel(category: string) {
+  return CATEGORY_LABELS[category] || category;
+}
+
+function riskClass(risk?: string) {
+  if (risk === "High") return "status-pill danger";
+  if (risk === "Low") return "status-pill success";
+  return "status-pill warning";
+}
+
 export default function VaultPage() {
   const [token, setToken] = useState(() => (typeof window === "undefined" ? "" : window.localStorage.getItem("legacy_token") || ""));
   const [documents, setDocuments] = useState<VaultDocument[]>([]);
+  const [assets, setAssets] = useState<Asset[]>([]);
   const [selectedId, setSelectedId] = useState("");
   const [query, setQuery] = useState("");
   const deferredQuery = useDeferredValue(query);
@@ -38,6 +117,7 @@ export default function VaultPage() {
   const [riskFilter, setRiskFilter] = useState("All");
   const [uploadStatus, setUploadStatus] = useState("Ready");
   const [isUploading, setIsUploading] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
     if (!token) {
@@ -45,15 +125,21 @@ export default function VaultPage() {
       if (t) setToken(t);
       return;
     }
+
     const controller = new AbortController();
-    cachedFetch<VaultDocument[]>(`${getApiUrl()}/vault-documents`, {
-      headers: { Authorization: `Bearer ${token}` },
-      signal: controller.signal,
-    }).then((data) => {
+    const opts = { headers: { Authorization: `Bearer ${token}` }, signal: controller.signal };
+
+    cachedFetch<VaultDocument[]>(`${getApiUrl()}/vault-documents`, opts).then((data) => {
       if (controller.signal.aborted) return;
       setDocuments(data || []);
       if (data?.[0]?.id) setSelectedId((prev) => prev || data[0].id);
     });
+
+    cachedFetch<Asset[]>(`${getApiUrl()}/assets`, opts).then((data) => {
+      if (controller.signal.aborted) return;
+      setAssets(data || []);
+    });
+
     return () => controller.abort();
   }, [token]);
 
@@ -73,6 +159,12 @@ export default function VaultPage() {
       return content.includes(q);
     });
   }, [documents, deferredQuery, riskFilter, typeFilter]);
+
+  const filteredAssets = useMemo(() => {
+    const q = deferredQuery.trim().toLowerCase();
+    if (!q) return assets;
+    return assets.filter((asset) => `${assetTitle(asset)} ${categoryLabel(asset.category)} ${assetSubtitle(asset)}`.toLowerCase().includes(q));
+  }, [assets, deferredQuery]);
 
   async function uploadFile(file: File) {
     if (!token || isUploading) return;
@@ -109,38 +201,95 @@ export default function VaultPage() {
     setDocuments((prev) => prev.filter((d) => d.id !== id));
   }
 
-  function riskClass(risk?: string) {
-    if (risk === "High") return "status-pill danger";
-    if (risk === "Low") return "status-pill success";
-    return "status-pill warning";
+  function handleAddAsset(asset: AssetRecord) {
+    setAssets((prev) => [
+      {
+        id: asset.id,
+        category: asset.category,
+        title: asset.title,
+        nomineeId: asset.nomineeId,
+        createdAt: asset.createdAt,
+      },
+      ...prev,
+    ]);
+    clearApiCache("assets");
+    clearApiCache("continuity-score");
   }
 
   return (
-    <div className="page-shell">
-      <header className="page-header">
+    <div className={`page-shell ${styles.workspace}`}>
+      <header className={`page-header ${styles.header}`}>
         <div>
           <p className="micro-label">Vault</p>
-          <h1>Document register</h1>
+          <h1>My Vault</h1>
+          <p className="page-description">Manage manual asset records and the documents that verify them.</p>
         </div>
-        <div className="header-search">
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search documents, nominees, risk"
-            autoComplete="off"
-            spellCheck={false}
-          />
+        <div className={styles.actions}>
+          <div className={styles.search}>
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search assets, documents, nominees, risk"
+              autoComplete="off"
+              spellCheck={false}
+            />
+          </div>
+          <button type="button" className="lv-btn lv-btn-primary" onClick={() => setModalOpen(true)}>
+            <Icon d={ICONS.plus} size={15} />
+            Add asset
+          </button>
         </div>
       </header>
 
-      <div className="console-grid">
-        <article className="console-card">
+      <section className={styles.stats} aria-label="Vault summary">
+        <div className={styles.stat}><span>Manual assets</span><strong>{assets.length}</strong><p>{assets.length ? "Stored in vault" : "Ready to add"}</p></div>
+        <div className={styles.stat}><span>Documents</span><strong>{documents.length}</strong><p>{documents.length ? "Available for review" : "No documents yet"}</p></div>
+        <div className={styles.stat}><span>Linked files</span><strong>{assets.filter((asset) => asset.details?.supportingDocument).length}</strong><p>Attached to asset records</p></div>
+      </section>
+
+      <section className={styles.assetPanel}>
+        <div className="card-head">
+          <div><p className="micro-label">Assets</p><h2>Asset register</h2></div>
+          <button type="button" className="lv-btn lv-btn-secondary" onClick={() => setModalOpen(true)}>
+            <Icon d={ICONS.plus} size={14} />
+            Add manually
+          </button>
+        </div>
+        <div className={styles.assetList}>
+          {filteredAssets.length ? (
+            filteredAssets.map((asset) => (
+              <article className={styles.assetRow} key={asset.id}>
+                <span className={styles.assetIcon}>
+                  <Icon d={ICONS[asset.category as keyof typeof ICONS] || ICONS.document} />
+                </span>
+                <div>
+                  <strong>{assetTitle(asset)}</strong>
+                  <span>{assetSubtitle(asset)}</span>
+                </div>
+                <em>{categoryLabel(asset.category)}</em>
+                <time>{formatDate(asset.createdAt)}</time>
+              </article>
+            ))
+          ) : (
+            <div className={styles.empty}>
+              <strong>No manual assets yet</strong>
+              <p>Add a bank account, property, policy, legal document, or digital asset with supporting details.</p>
+              <button type="button" className="lv-btn lv-btn-primary" onClick={() => setModalOpen(true)}>
+                Add first asset
+              </button>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <div className={styles.documentGrid}>
+        <article className={styles.uploadCard}>
           <div className="card-head">
-            <div><p className="micro-label">Upload</p><h2>AI intake room</h2></div>
+            <div><p className="micro-label">Documents</p><h2>Document intake</h2></div>
             <span>{uploadStatus}</span>
           </div>
           <label
-            className="premium-dropzone"
+            className={styles.dropzone}
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => {
               e.preventDefault();
@@ -150,20 +299,21 @@ export default function VaultPage() {
           >
             <input
               type="file"
-              accept="image/*,.pdf"
+              accept="image/*,.pdf,.doc,.docx"
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) void uploadFile(file);
               }}
             />
-            <b>{isUploading ? "Processing document" : "Drop document"}</b>
-            <span>OCR, categorization, risk analysis, nominee detection</span>
+            <span className={styles.dropIcon}><Icon d={ICONS.upload} size={18} /></span>
+            <b>{isUploading ? "Processing document" : "Drop a document here"}</b>
+            <span>OCR, categorization and risk analysis run after upload.</span>
           </label>
         </article>
 
-        <article className="console-card">
+        <article className={styles.documentsCard}>
           <div className="card-head">
-            <div><p className="micro-label">Vault</p><h2>Document list</h2></div>
+            <div><p className="micro-label">Documents</p><h2>Document list</h2></div>
           </div>
           <div className="filters">
             <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
@@ -194,9 +344,9 @@ export default function VaultPage() {
         </article>
       </div>
 
-      <article className="console-card document-console">
+      <article className={`document-console ${styles.analysisCard}`}>
         <div className="card-head">
-          <div><p className="micro-label">Analysis</p><h2>Selected intelligence</h2></div>
+          <div><p className="micro-label">Analysis</p><h2>Selected document</h2></div>
           {selectedDocument && (
             <button className="danger-button" onClick={() => void deleteDocument(selectedDocument.id)}>
               Delete
@@ -220,6 +370,12 @@ export default function VaultPage() {
           <p className="empty-message">Select a document to inspect.</p>
         )}
       </article>
+
+      <AddAssetModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onAssetCreated={handleAddAsset}
+      />
     </div>
   );
 }

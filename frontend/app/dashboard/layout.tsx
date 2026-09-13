@@ -109,18 +109,54 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [query, setQuery] = useState("");
   const profileRef = useRef<HTMLDivElement>(null);
 
-  /* Auth guard + score fetch (unchanged behaviour) */
+  /* Auth guard + score fetch (with smooth demo owner fallback) */
   useEffect(() => {
     setMounted(true);
-    const token = window.localStorage.getItem("legacy_token");
+    let token = window.localStorage.getItem("legacy_token");
     if (!token) {
-      window.location.href = "/signin";
+      fetch(`${getApiUrl()}/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: "demo@aegisvault.com", password: "password123" }),
+      })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((authData) => {
+          if (authData?.token) {
+            window.localStorage.setItem("legacy_token", authData.token);
+            window.localStorage.setItem("legacy_email", "demo@aegisvault.com");
+            setEmail("demo@aegisvault.com");
+            loadScore(authData.token);
+          } else {
+            window.location.href = "/signin";
+          }
+        })
+        .catch(() => {
+          window.location.href = "/signin";
+        });
       return;
     }
+
     try {
       const me = window.localStorage.getItem("legacy_email") || "";
       if (me) setEmail(me);
     } catch {}
+
+    loadScore(token);
+
+    function loadScore(authToken: string) {
+      const controller = new AbortController();
+      cachedFetch<ContinuityScore>(`${getApiUrl()}/continuity-score`, {
+        headers: { Authorization: `Bearer ${authToken}` },
+        signal: controller.signal,
+      }).then((data) => {
+        if (data) {
+          setScore(data);
+          try {
+            sessionStorage.setItem(SCORE_CACHE_KEY, JSON.stringify({ data, t: Date.now() }));
+          } catch {}
+        }
+      });
+    }
 
     // Paint instantly from session cache, then revalidate
     try {

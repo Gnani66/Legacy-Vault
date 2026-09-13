@@ -471,7 +471,7 @@ export default function OverviewPage() {
                 </tbody>
               </table>
               {query && !filteredAssets.length && (
-                <p className="table-empty">No assets match "{query}".</p>
+                <p className="table-empty">No assets match &quot;{query}&quot;.</p>
               )}
             </div>
           ) : (

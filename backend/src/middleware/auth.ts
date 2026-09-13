@@ -12,7 +12,7 @@ export function authMiddleware(req: AuthRequest, res: Response, next: NextFuncti
   }
   const token = header.slice(7);
   const payload = verifyToken(token);
-  if (!payload) return res.status(401).json({ message: "Invalid token" });
+  if (!payload || payload.type !== "user" || !payload.userId) return res.status(401).json({ message: "Invalid owner token" });
   req.user = payload;
   next();
 }

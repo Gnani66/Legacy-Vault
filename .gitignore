@@ -22,12 +22,15 @@ __pycache__/
 .venv/
 venv/
 
-# Environment files (secrets) - never commit
+# Environment files and local secrets - never commit
 .env
 .env.*
-!.env.example
-backend/.env
-ai-service/.env
+.envrc
+*.env
+*.env.*
+.npmrc
+!**/.env.example
+
 
 # Uploads (local files)
 backend/uploads/*

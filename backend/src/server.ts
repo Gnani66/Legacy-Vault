@@ -48,6 +48,14 @@ app.get("/health", (req, res) => {
   res.json({ success: true, message: "Backend healthy", version: "aegis+legacy", phase: "5" });
 });
 
+app.use((error: unknown, _req: express.Request, res: express.Response, next: express.NextFunction) => {
+  if (error instanceof SyntaxError && "status" in error && (error as { status?: number }).status === 400) {
+    return res.status(400).json({ message: "Malformed JSON request body" });
+  }
+
+  return next(error);
+});
+
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {

@@ -27,7 +27,7 @@ async function main() {
   console.log("\nUpdate backend/.env:");
   console.log(`CONTRACT_ADDRESS=${address}`);
   console.log(`BLOCKCHAIN_PRIVATE_KEY=<dedicated verifier private key - use account #1>`);
-  console.log(`Example verifier #1 private: 0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d`);
+  console.log("Use the dedicated verifier account #1 private key from backend/.env.");
 }
 
 main().catch((error) => {
